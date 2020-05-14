@@ -5,9 +5,12 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour
 {
+    Rigidbody rigidBody;
+
     // Start is called before the first frame update
     void Start()
     {
+        rigidBody = GetComponent<Rigidbody>();
         
     }
 
@@ -21,7 +24,8 @@ public class Rocket : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Space)) // can thrust while rotating
         {
-            print("Thrusting");
+
+            rigidBody.AddRelativeForce(Vector3.up);
         }
 
         if (Input.GetKey(KeyCode.A)) // rotate left but cannot rotate right at the same time, so use if-elseif
