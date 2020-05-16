@@ -5,11 +5,11 @@ public class Rocket : MonoBehaviour
 {
     [SerializeField] float rotMul = 100f;
     [SerializeField] float thrustMul = 100f;
+    [SerializeField] AudioClip rocketSound, deathSound, winSound;
+    [SerializeField] ParticleSystem rocketParticles, winParticles;
 
     Rigidbody rigidBody;
-    AudioSource[] audioSources;
-    AudioSource rocketSound, deathSound;
-    ParticleSystem rocketThrust;
+    AudioSource audioSource;
 
 
     bool thrusting;
@@ -24,23 +24,22 @@ public class Rocket : MonoBehaviour
         thrusting = false;
 
         rigidBody = GetComponent<Rigidbody>();
-        rocketThrust = GetComponent<ParticleSystem>();
-        audioSources = GetComponents<AudioSource>();
-        rocketSound = audioSources[0];
-        deathSound = audioSources[1];
+        audioSource = GetComponent<AudioSource>();
+
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!state.Equals(State.Dying)) // only move if alive
+        if (state.Equals(State.Alive)) // only move if alive
         {
             Thrust();
             Rotate();
         }
 
     }
+    
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -50,14 +49,11 @@ public class Rocket : MonoBehaviour
         {
             case "Dead":
                 Die();
-                
                 break;
 
             case "Finish":
                 Transcend();
                 break;
-
-
 
         }
     }
@@ -65,16 +61,20 @@ public class Rocket : MonoBehaviour
     private void Transcend()
     {
         state = State.Transcending;
-        Invoke("LoadNextLevel", 1f);
+        audioSource.Stop();
+        rocketParticles.Stop();
+        audioSource.PlayOneShot(winSound);
+        winParticles.Play();
+        Invoke("LoadNextLevel", 2f);
     }
 
     private void Die()
     {
         state = State.Dying;
         rigidBody.freezeRotation = false;
-        rocketThrust.Stop();
-        rocketSound.Stop();
-        deathSound.Play();
+        rocketParticles.Stop();
+        audioSource.Stop();
+        audioSource.PlayOneShot(deathSound);
         Invoke("LoadFirstLevel", 2f);
     }
 
@@ -119,19 +119,18 @@ public class Rocket : MonoBehaviour
             rigidBody.AddRelativeForce(Vector3.up * thrustThisFrame);
             if (!thrusting) // if not already thrusting, play rocket sound and starting thrust particles
             {
-                rocketThrust.Play();
-                rocketSound.Play();
+                rocketParticles.Play();
+                audioSource.PlayOneShot(rocketSound);
                 thrusting = true;
             }
-
 
         }
         else
         {
             if (thrusting) // if previously thrusting but no longer thrusting, turn off rocket sound and stop thrust particles
             {
-                rocketSound.Stop();
-                rocketThrust.Stop();
+                audioSource.Stop();
+                rocketParticles.Stop();
                 thrusting = false;
             }
 
