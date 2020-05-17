@@ -13,6 +13,8 @@ public class Rocket : MonoBehaviour
 
 
     bool thrusting;
+    bool collisions;
+    int currentSceneIndex;
 
     enum State { Alive, Dying, Transcending };
     State state;
@@ -22,9 +24,12 @@ public class Rocket : MonoBehaviour
     {
         state = State.Alive;
         thrusting = false;
-
+        collisions = true;
         rigidBody = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+
+        currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+
 
 
     }
@@ -32,6 +37,7 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        CheckDebugKeys();
         if (state.Equals(State.Alive)) // only move if alive
         {
             Thrust();
@@ -44,6 +50,7 @@ public class Rocket : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         if (!state.Equals(State.Alive)) return; // exit if not alive, ignore collision
+        if (!collisions) return; // if collisions are disabled ignore them
 
         switch (collision.gameObject.tag)
         {
@@ -75,17 +82,25 @@ public class Rocket : MonoBehaviour
         rocketParticles.Stop();
         audioSource.Stop();
         audioSource.PlayOneShot(deathSound);
-        Invoke("LoadFirstLevel", 2f);
+        Invoke("Respawn", 2f);
     }
 
-    private void LoadFirstLevel()
+    private void Respawn()
     {
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(currentSceneIndex);
     }
 
     private void LoadNextLevel()
     {
-        SceneManager.LoadScene(1);
+        if (currentSceneIndex == SceneManager.sceneCountInBuildSettings - 1)
+        {
+            SceneManager.LoadScene(0);
+        }
+        else
+        {
+            SceneManager.LoadScene(currentSceneIndex + 1);
+        }
+            
     }
 
     public void Rotate()
@@ -134,6 +149,21 @@ public class Rocket : MonoBehaviour
                 thrusting = false;
             }
 
+        }
+    }
+
+    private void CheckDebugKeys()
+    {
+        
+        if (Input.GetKeyDown(KeyCode.C)) // can thrust while rotating
+        {
+
+            collisions = !collisions;
+
+        }
+        else if (Input.GetKeyDown(KeyCode.L))
+        {
+            Transcend();
         }
     }
 }
